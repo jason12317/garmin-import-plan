@@ -1,50 +1,48 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+Version change: 0.0.0 → 1.0.0
+List of modified principles:
+- [NEW] I. 高品質與穩定性 (High Quality & Stability)
+- [NEW] II. 高可測試性 (Testability)
+- [NEW] III. 最小可行性產品 (MVP)
+- [NEW] IV. 避免過度設計 (No Overdesign)
+- [NEW] V. 統一使用正體中文 (Unified Traditional Chinese)
+Added sections: 技術規範與安全要求, 開發流程與品質門檻
+Removed sections: None
+Templates requiring updates:
+- .specify/templates/plan-template.md (✅ updated)
+- .specify/templates/spec-template.md (✅ updated)
+- .specify/templates/tasks-template.md (✅ updated)
+Follow-up TODOs: None
+-->
 
-## Core Principles
+# Garmin Import Plan 憲法
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+## 核心原則
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### I. 高品質與穩定性
+我們追求代碼的精確與穩定。每一行代碼都必須經過深思熟慮，確保系統的可讀性與可維護性。禁止任何可能導致系統不穩定的捷徑，確保在處理 Garmin 數據時的準確性。
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### II. 高可測試性
+所有的功能實作必須是可測試的。代碼設計應優先考慮測試可行性，確保關鍵邏輯擁有自動化測試覆蓋。測試必須作為代碼正確性的唯一權威驗證，並在 CI/CD 流程中嚴格執行。
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### III. 最小可行性產品 (MVP)
+專注於核心價值的交付。在開發初期，僅實作達成目標所必須的功能。透過快速迭代收集反饋，避免在需求未明確前投入過多資源開發非必要功能。
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### IV. 避免過度設計 (No Overdesign)
+保持設計的簡單性。僅針對當前的需求進行架構與設計，不為假設性的未來需求增加複雜性。遵循 YAGNI 原則，採用最簡單且有效的解決方案。
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+### V. 統一使用正體中文
+為了確保團隊溝通的高精確度與一致性，所有項目文檔、開發計畫、任務清單及 AI 回應一律使用正體中文。
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+## 技術規範與安全要求
+數據處理與儲存必須遵守隱私保護原則。優先採用強類型語言與自動化檢查工具，以降低運行時錯誤。
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+## 開發流程與品質門檻
+1. **測試驅動**: 優先撰寫測試案例，確保功能符合預期。
+2. **代碼審閱**: 所有的變更必須經過審核，並驗證是否符合本項目的核心原則。
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+## 治理規範
+本憲法高於所有其他開發實務；任何修改均需記錄、審查並擬定遷移計劃。PR 必須驗證是否符合本規範。
 
-## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
+**Version**: 1.0.0 | **Ratified**: 2026-01-08 | **Last Amended**: 2026-01-08
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
-
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->

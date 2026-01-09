@@ -1,62 +1,53 @@
-# Implementation Plan: [FEATURE]
+# 實作計畫：[FEATURE]
 
-**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
-**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
+**分支**: `[###-feature-name]` | **日期**: [DATE] | **規格書**: [link]
+**輸入**: 來自 `/specs/[###-feature-name]/spec.md` 的功能規格
 
-**Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
+**注意**: 此範本由 `/speckit.plan` 指令填寫。
 
-## Summary
+## 摘要
 
-[Extract from feature spec: primary requirement + technical approach from research]
+[從功能規格中提取：主要需求 + 來自研究的技術方案]
 
-## Technical Context
+## 技術背景
 
-<!--
-  ACTION REQUIRED: Replace the content in this section with the technical details
-  for the project. The structure here is presented in advisory capacity to guide
-  the iteration process.
--->
+**語言/版本**: [例如：Python 3.11, Rust 1.75 或 待釐清]  
+**主要依賴**: [例如：FastAPI, LLVM 或 待釐清]  
+**存儲**: [若適用，例如：PostgreSQL, 文件 或 不適用]  
+**測試**: [例如：pytest, cargo test 或 待釐清]  
+**目標平台**: [例如：Linux server, WASM 或 待釐清]
+**項目類型**: [單一項目/Web/Mobile - 決定原始碼結構]  
+**效能目標**: [領域特定，例如：1000 req/s 或 待釐清]  
+**約束條件**: [領域特定，例如：<200ms p95 或 待釐清]  
+**規模/範疇**: [領域特定，例如：1M LOC 或 待釐清]
 
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
-**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
-**Project Type**: [single/web/mobile - determines source structure]  
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
-**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
+## 憲法檢查 (Constitution Check)
 
-## Constitution Check
+*門檻：必須在 Phase 0 研究前通過。在 Phase 1 設計後重新檢查。*
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+- [ ] **高品質與穩定性**: 方案是否確保了代碼的可維護性與數據準確性？
+- [ ] **高可測試性**: 是否已規劃自動化測試方案？關鍵邏輯是否有測試覆蓋？
+- [ ] **最小可行性產品 (MVP)**: 方案是否專注於核心價值，排除非必要功能？
+- [ ] **避免過度設計**: 方案是否是最簡單的有效解決方案？是否遵循 YAGNI？
+- [ ] **統一使用正體中文**: 文檔與註釋是否使用正體中文？
 
-[Gates determined based on constitution file]
+## 項目結構
 
-## Project Structure
-
-### Documentation (this feature)
+### 文檔 (此功能)
 
 ```text
 specs/[###-feature]/
-├── plan.md              # This file (/speckit.plan command output)
-├── research.md          # Phase 0 output (/speckit.plan command)
-├── data-model.md        # Phase 1 output (/speckit.plan command)
-├── quickstart.md        # Phase 1 output (/speckit.plan command)
-├── contracts/           # Phase 1 output (/speckit.plan command)
-└── tasks.md             # Phase 2 output (/speckit.tasks command - NOT created by /speckit.plan)
+├── plan.md              # 此文件
+├── research.md          # Phase 0 產出
+├── data-model.md        # Phase 1 產出
+├── quickstart.md        # Phase 1 產出
+├── contracts/           # Phase 1 產出
+└── tasks.md             # Phase 2 產出
 ```
 
-### Source Code (repository root)
-<!--
-  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
-  for this feature. Delete unused options and expand the chosen structure with
-  real paths (e.g., apps/admin, packages/something). The delivered plan must
-  not include Option labels.
--->
+### 原始碼 (項目根目錄)
 
 ```text
-# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
 src/
 ├── models/
 ├── services/
@@ -67,36 +58,14 @@ tests/
 ├── contract/
 ├── integration/
 └── unit/
-
-# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
-backend/
-├── src/
-│   ├── models/
-│   ├── services/
-│   └── api/
-└── tests/
-
-frontend/
-├── src/
-│   ├── components/
-│   ├── pages/
-│   └── services/
-└── tests/
-
-# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
-api/
-└── [same as backend above]
-
-ios/ or android/
-└── [platform-specific structure: feature modules, UI flows, platform tests]
 ```
 
-**Structure Decision**: [Document the selected structure and reference the real
-directories captured above]
+**結構決策**: [記錄選擇的結構並引用上方捕獲的實際路徑]
 
-## Complexity Tracking
+## 複雜度追蹤
 
-> **Fill ONLY if Constitution Check has violations that must be justified**
+> **僅在憲法檢查有違規但必須證成時填寫**
+
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 |-----------|------------|-------------------------------------|

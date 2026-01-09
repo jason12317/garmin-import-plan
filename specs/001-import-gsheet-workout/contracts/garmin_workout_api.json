@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Garmin Workout API Request",
+  "type": "object",
+  "properties": {
+    "workoutName": { "type": "string" },
+    "sportType": {
+      "type": "object",
+      "properties": {
+        "sportTypeKey": { "type": "string" },
+        "displayOrder": { "type": "integer" }
+      }
+    },
+    "workoutSegments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "workoutSteps": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                { "$ref": "#/definitions/ExecutableStep" },
+                { "$ref": "#/definitions/RepeatGroup" }
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "ExecutableStep": {
+      "type": "object",
+      "properties": {
+        "type": { "const": "ExecutableStepDTO" },
+        "exerciseName": { "type": "string" },
+        "stepType": { "type": "object" },
+        "endCondition": { "type": "object" },
+        "endConditionValue": { "type": "number" }
+      }
+    },
+    "RepeatGroup": {
+      "type": "object",
+      "properties": {
+        "type": { "const": "RepeatGroupDTO" },
+        "numberOfIterations": { "type": "integer" },
+        "workoutSteps": { "type": "array", "items": { "$ref": "#/definitions/ExecutableStep" } }
+      }
+    }
+  }
+}

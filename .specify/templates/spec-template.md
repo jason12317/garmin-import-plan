@@ -1,103 +1,65 @@
-# Feature Specification: [FEATURE NAME]
+# 功能規格書：[FEATURE NAME]
 
-**Feature Branch**: `[###-feature-name]`  
-**Created**: [DATE]  
-**Status**: Draft  
-**Input**: User description: "$ARGUMENTS"
+**功能分支**: `[###-feature-name]`  
+**建立日期**: [DATE]  
+**狀態**: 草案  
+**輸入**: 用戶描述："$ARGUMENTS"
 
-## User Scenarios & Testing *(mandatory)*
+## 用戶場景與測試 *(強制)*
 
 <!--
-  IMPORTANT: User stories should be PRIORITIZED as user journeys ordered by importance.
-  Each user story/journey must be INDEPENDENTLY TESTABLE - meaning if you implement just ONE of them,
-  you should still have a viable MVP (Minimum Viable Product) that delivers value.
+  重要：用戶故事應按重要性排序為用戶旅程。
+  每個用戶故事/旅程必須是可獨立測試的 - 這意味著即使你只實作其中一個，
+  你仍應有一個可交付價值的最小可行性產品 (MVP)。
   
-  Assign priorities (P1, P2, P3, etc.) to each story, where P1 is the most critical.
-  Think of each story as a standalone slice of functionality that can be:
-  - Developed independently
-  - Tested independently
-  - Deployed independently
-  - Demonstrated to users independently
+  為每個故事分配優先級 (P1, P2, P3 等)，其中 P1 最為關鍵。
 -->
 
-### User Story 1 - [Brief Title] (Priority: P1)
+### 用戶故事 1 - [簡短標題] (優先級：P1)
 
-[Describe this user journey in plain language]
+[用平實的語言描述此用戶旅程]
 
-**Why this priority**: [Explain the value and why it has this priority level]
+**為什麼是此優先級**: [解釋其價值以及為何具有此優先級別]
 
-**Independent Test**: [Describe how this can be tested independently - e.g., "Can be fully tested by [specific action] and delivers [specific value]"]
+**獨立測試**: [描述如何獨立測試此功能 - 例如：「可以透過 [特定動作] 進行全面測試並交付 [特定價值]」]
 
-**Acceptance Scenarios**:
+**驗收場景**:
 
-1. **Given** [initial state], **When** [action], **Then** [expected outcome]
-2. **Given** [initial state], **When** [action], **Then** [expected outcome]
+1. **假設** [初始狀態]，**當** [操作]，**則** [預期結果]
+2. **假設** [初始狀態]，**當** [操作]，**則** [預期結果]
 
 ---
 
-### User Story 2 - [Brief Title] (Priority: P2)
+### 用戶故事 2 - [簡短標題] (優先級：P2)
 
-[Describe this user journey in plain language]
+[用平實的語言描述此用戶旅程]
 
-**Why this priority**: [Explain the value and why it has this priority level]
+**為什麼是此優先級**: [解釋其價值]
 
-**Independent Test**: [Describe how this can be tested independently]
+**獨立測試**: [描述如何獨立測試]
 
-**Acceptance Scenarios**:
+**驗收場景**:
 
-1. **Given** [initial state], **When** [action], **Then** [expected outcome]
-
----
-
-### User Story 3 - [Brief Title] (Priority: P3)
-
-[Describe this user journey in plain language]
-
-**Why this priority**: [Explain the value and why it has this priority level]
-
-**Independent Test**: [Describe how this can be tested independently]
-
-**Acceptance Scenarios**:
-
-1. **Given** [initial state], **When** [action], **Then** [expected outcome]
+1. **假設** [初始狀態]，**當** [操作]，**則** [預期結果]
 
 ---
 
-[Add more user stories as needed, each with an assigned priority]
+### 邊界情況
 
-### Edge Cases
+- [邊界條件] 時會發生什麼？
+- 系統如何處理 [錯誤情境]？
 
-<!--
-  ACTION REQUIRED: The content in this section represents placeholders.
-  Fill them out with the right edge cases.
--->
+## 需求 *(強制)*
 
-- What happens when [boundary condition]?
-- How does system handle [error scenario]?
+### 功能需求
 
-## Requirements *(mandatory)*
+- **FR-001**: 系統「必須」(MUST) [特定能力]
+- **FR-002**: 系統「必須」(MUST) [特定能力]  
 
-<!--
-  ACTION REQUIRED: The content in this section represents placeholders.
-  Fill them out with the right functional requirements.
--->
+### 關鍵實體 *(若涉及數據則包含)*
 
-### Functional Requirements
+- **[Entity 1]**: [其代表的意義，關鍵屬性，不包含實作細節]
 
-- **FR-001**: System MUST [specific capability, e.g., "allow users to create accounts"]
-- **FR-002**: System MUST [specific capability, e.g., "validate email addresses"]  
-- **FR-003**: Users MUST be able to [key interaction, e.g., "reset their password"]
-- **FR-004**: System MUST [data requirement, e.g., "persist user preferences"]
-- **FR-005**: System MUST [behavior, e.g., "log all security events"]
-
-*Example of marking unclear requirements:*
-
-- **FR-006**: System MUST authenticate users via [NEEDS CLARIFICATION: auth method not specified - email/password, SSO, OAuth?]
-- **FR-007**: System MUST retain user data for [NEEDS CLARIFICATION: retention period not specified]
-
-### Key Entities *(include if feature involves data)*
-
-- **[Entity 1]**: [What it represents, key attributes without implementation]
 - **[Entity 2]**: [What it represents, relationships to other entities]
 
 ## Success Criteria *(mandatory)*
