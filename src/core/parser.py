@@ -8,7 +8,8 @@ from src.models.garmin_dto import (
     GarminExecutableStep, 
     GarminEndCondition,
     GarminStepType,
-    GarminStepTarget
+    GarminStepTarget,
+    GarminRepeatGroup
 )
 
 logger = logging.getLogger(__name__)
@@ -205,29 +206,55 @@ class WorkoutParser:
                 reps_list += [reps_list[-1]] * (sets_val - len(reps_list))
                 
             # Create Steps
-            for i in range(sets_val):
-                reps = reps_list[i] if i < len(reps_list) else 8
+            # Improved logic: Check if all reps are identical
+            # If identical, create a RepeatGroup
+            # If different, create individual steps
+            
+            all_reps_same = all(r == reps_list[0] for r in reps_list)
+            
+            if all_reps_same and sets_val > 1:
+                # Create one step wrapped in RepeatGroup
+                reps = reps_list[0]
                 
-                step = GarminExecutableStep(
+                single_step = GarminExecutableStep(
                     stepId=None,
-                    stepOrder=len(steps) + 1,
-                    description=None,
+                    stepOrder=1, # Inside loop
+                    description=exercise, # Put Name in description/notes
                     exerciseName=exercise,
-                    stepType=GarminStepType(stepTypeKey="interval", stepTypeId=3), # Default to interval
+                    stepType=GarminStepType(stepTypeKey="interval", stepTypeId=3),
                     endCondition=GarminEndCondition(conditionTypeKey="reps", conditionTypeId=10),
                     endConditionValue=float(reps)
                 )
                 
-                # Add Weight Target if > 0
+                # Add Weight Target logic if needed
                 if weight_val > 0:
-                    # Garmin uses target parameters. 
-                    # typeId 1 = power? No. 
-                    # Usually for Strength: targetType is null, but we can store weight in a 'weight' field?
-                    # The schema has `target`.
-                    # Let's populate targetValueOne with weight (typical for strength)
-                    pass # TODO: Research exact Weight target Key. For now, we focus on Reps.
+                     # For strength, often just "Description" is used unless we map to strict targets
+                     pass 
                 
-                steps.append(step)
+                repeat_group = GarminRepeatGroup(
+                    stepOrder=len(steps) + 1,
+                    numberOfIterations=sets_val,
+                    workoutSteps=[single_step],
+                    smartRepeat=False
+                )
+                steps.append(repeat_group)
+                
+            else:
+                # Create individual steps
+                for i in range(sets_val):
+                    reps = reps_list[i] if i < len(reps_list) else 8
+                    
+                    step = GarminExecutableStep(
+                        stepId=None,
+                        stepOrder=len(steps) + 1,
+                        description=exercise, # Put Name in description/notes
+                        exerciseName=exercise,
+                        stepType=GarminStepType(stepTypeKey="interval", stepTypeId=3), # Default to interval
+                        endCondition=GarminEndCondition(conditionTypeKey="reps", conditionTypeId=10),
+                        endConditionValue=float(reps)
+                    )
+                    
+                    steps.append(step)
                 
             curr_idx += 1
             

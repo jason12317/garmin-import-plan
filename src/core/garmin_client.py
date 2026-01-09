@@ -46,6 +46,12 @@ class GarminClient:
         # Pydantic v2: model_dump(mode='json') or just model_dump()
         payload = workout_dto.model_dump(exclude_none=True)
         
+        # Debug: Log request payload
+        import json
+        logger.info(f"--- DEBUG: Payload for {workout_dto.workoutName} ---")
+        logger.info(json.dumps(payload, indent=2, ensure_ascii=False))
+        logger.info("---------------------------------------------------")
+        
         logger.info(f"Creating workout: {workout_dto.workoutName}")
         try:
             # garth client.post also needs subdomain, path structure or use connectapi for auto subdomain handling
