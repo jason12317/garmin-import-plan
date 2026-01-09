@@ -24,10 +24,15 @@ class GarminClient:
             # or check Garth documentation/examples.
             # Assuming GET /workout-service/workouts?start=0&limit=100
             
-            url = f"https://connect.garmin.com/gc-api/workout-service/workouts?start=0&limit={limit}"
-            response = garth.client.get(url)
-            if response.status_code == 200:
-                return response.json()
+            # garth.client.get needs (subdomain, path, api=True/False)
+            response = garth.client.connectapi(
+                f"/workout-service/workouts?start=0&limit={limit}",
+                method="GET"
+            )
+            
+            # connectapi returns parsed JSON or None if 204
+            if response:
+                return response
             else:
                 return []
         except Exception as e:
@@ -43,7 +48,17 @@ class GarminClient:
         
         logger.info(f"Creating workout: {workout_dto.workoutName}")
         try:
-            response = garth.client.post(WORKOUT_SERVICE_ENDPOINT, json=payload)
+            # garth client.post also needs subdomain, path structure or use connectapi for auto subdomain handling
+            # WORKOUT_SERVICE_ENDPOINT = "https://connect.garmin.com/gc-api/workout-service/workout"
+            # Path is /workout-service/workout
+            
+            response = garth.client.post(
+                "connectapi", 
+                "/workout-service/workout",
+                json=payload,
+                api=True
+            )
+            
             if response.status_code == 200 or response.status_code == 201:
                 data = response.json()
                 logger.info(f"Workout created: ID {data.get('workoutId')}")
