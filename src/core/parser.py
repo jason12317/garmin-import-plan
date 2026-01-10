@@ -9,7 +9,8 @@ from src.models.garmin_dto import (
     GarminEndCondition,
     GarminStepType,
     GarminStepTarget,
-    GarminRepeatGroup
+    GarminRepeatGroup,
+    GarminWeightUnit
 )
 
 logger = logging.getLogger(__name__)
@@ -140,10 +141,12 @@ class WorkoutParser:
             col_sets = header.index("組數")
             col_weight = header.index("重量")
             col_reps = header.index("次數")
+            col_rir = header.index("保留")
+
         except ValueError:
             logger.warning(f"Header row missing required columns at line {header_row_idx}")
             return None, header_row_idx
-            
+        
         # 2. Iterate data rows
         steps = []
         curr_idx = header_row_idx + 1
@@ -191,46 +194,49 @@ class WorkoutParser:
             raw_weight = str(row[col_weight])
             weight_val = self.parse_weight(raw_weight)
             
-            # Parse Reps
-            raw_reps = str(row[col_reps])
-            reps_list = self.parse_reps_string(raw_reps)
+            # Parse Reps (Raw String for display)
+            raw_reps = str(row[col_reps]).strip()
+            if raw_reps.lower() == "nan": raw_reps = ""
+            if raw_reps.endswith(".0"): raw_reps = raw_reps[:-2]
+
+            # Parse RIR
+            rir_str = ""
+            if col_rir != -1:
+                val = str(row[col_rir]).strip()
+                if val and val.lower() != "nan":
+                    rir_str = val
             
-            # Logic: If Reps list < Sets, cycle/repeat last? Or default to 8?
-            # If Reps list > Sets, truncate?
-            # Usually strict match or broadcast single value
-            
-            if len(reps_list) == 1:
-                reps_list = reps_list * sets_val
-            elif len(reps_list) < sets_val:
-                # Pad with last value
-                reps_list += [reps_list[-1]] * (sets_val - len(reps_list))
-                
             # Create Steps
-            # Improved logic: Check if all reps are identical
-            # If identical, create a RepeatGroup
-            # If different, create individual steps
+            # Logic: Always use RepeatGroup if sets > 1 (Simplified per request)
+            # Put details in description for self-evaluation
             
-            all_reps_same = all(r == reps_list[0] for r in reps_list)
+            # Format Description
+            step_desc = f"{exercise}"
+            details = []
+            if weight_val > 0:
+                details.append(f"重: {weight_val}kg")
+            if raw_reps:
+                details.append(f"次: {raw_reps}")
+            if rir_str:
+                details.append(f"保留: {rir_str}")
+                
+            if details:
+                step_desc += "\n" + " | ".join(details)
             
-            if all_reps_same and sets_val > 1:
-                # Create one step wrapped in RepeatGroup
-                reps = reps_list[0]
-                
-                single_step = GarminExecutableStep(
-                    stepId=None,
-                    stepOrder=1, # Inside loop
-                    description=exercise, # Put Name in description/notes
-                    exerciseName=exercise,
-                    stepType=GarminStepType(stepTypeKey="interval", stepTypeId=3),
-                    endCondition=GarminEndCondition(conditionTypeKey="reps", conditionTypeId=10),
-                    endConditionValue=float(reps)
-                )
-                
-                # Add Weight Target logic if needed
-                if weight_val > 0:
-                     # For strength, often just "Description" is used unless we map to strict targets
-                     pass 
-                
+            single_step = GarminExecutableStep(
+                stepId=None,
+                stepOrder=1, # Inside loop
+                description=step_desc,
+                exerciseName=exercise,
+                stepType=GarminStepType(stepTypeKey="interval", stepTypeId=3),
+                endCondition=GarminEndCondition(conditionTypeKey="lap.button", conditionTypeId=1),
+                endConditionValue=None,
+                weightValue=weight_val if weight_val > 0 else None,
+                weightUnit=GarminWeightUnit(unitKey="kilogram") if weight_val > 0 else None
+            )
+            
+            if sets_val > 1:
+                # Create RepeatGroup
                 repeat_group = GarminRepeatGroup(
                     stepOrder=len(steps) + 1,
                     numberOfIterations=sets_val,
@@ -238,23 +244,10 @@ class WorkoutParser:
                     smartRepeat=False
                 )
                 steps.append(repeat_group)
-                
             else:
-                # Create individual steps
-                for i in range(sets_val):
-                    reps = reps_list[i] if i < len(reps_list) else 8
-                    
-                    step = GarminExecutableStep(
-                        stepId=None,
-                        stepOrder=len(steps) + 1,
-                        description=exercise, # Put Name in description/notes
-                        exerciseName=exercise,
-                        stepType=GarminStepType(stepTypeKey="interval", stepTypeId=3), # Default to interval
-                        endCondition=GarminEndCondition(conditionTypeKey="reps", conditionTypeId=10),
-                        endConditionValue=float(reps)
-                    )
-                    
-                    steps.append(step)
+                # Single Step
+                single_step.stepOrder = len(steps) + 1
+                steps.append(single_step)
                 
             curr_idx += 1
             

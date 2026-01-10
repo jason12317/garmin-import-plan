@@ -20,6 +20,9 @@ class GarminEndConditionUnit(BaseModel):
     unitKey: Optional[str] = None
     factor: Optional[float] = None
 
+class GarminWeightUnit(BaseModel):
+    unitKey: str = "kilogram"
+
 class GarminTargetType(BaseModel):
     workoutTargetTypeKey: Optional[str] = None
     workoutTargetTypeId: Optional[int] = None
@@ -43,6 +46,8 @@ class GarminExecutableStep(BaseStepDTO):
     endConditionUnit: Optional[GarminEndConditionUnit] = None
     target: Optional[GarminStepTarget] = None
     exerciseName: Optional[str] = None
+    weightValue: Optional[float] = None
+    weightUnit: Optional[GarminWeightUnit] = None
     # Additional fields often used for strength exercises (category etc are mapped inside exerciseName or separate objects?)
     # For now, sticking to the schema provided.
 
