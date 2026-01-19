@@ -6,9 +6,9 @@ import os
 from typing import List, Optional, Union, Dict
 from difflib import SequenceMatcher
 from src.models.garmin_dto import (
-    GarminWorkoutDTO, 
-    GarminWorkoutSegment, 
-    GarminExecutableStep, 
+    GarminWorkoutDTO,
+    GarminWorkoutSegment,
+    GarminExecutableStep,
     GarminEndCondition,
     GarminEndConditionUnit,
     GarminStepType,
@@ -32,13 +32,9 @@ class WorkoutParser:
     def __init__(self, garmin_client=None):
         self.exercise_mapping = self._load_exercise_mapping()
         self.category_mapping = self._load_category_mapping()
-        self.category_mapping = self._load_category_mapping()
         self.garmin_client = garmin_client
         self.learned_mapping = {}  # Store learned exercise mappings from existing workouts
-        
-        # Learn from existing W1_DayX workouts if client is provided
-        if self.garmin_client:
-            self._learn_from_existing_workouts()
+        self.is_w1_training = False  # Track if current training is W1
     
     def _create_rest_step(self, step_order: int, rest_seconds: int = 90) -> GarminExecutableStep:
         """Create a rest step with specified duration"""
@@ -531,6 +527,15 @@ class WorkoutParser:
         # Prefer sheet name over filename for prefix
         week_info = sheet_name if sheet_name else self._extract_week_info(filename)
         
+        # Check if this is W1 training
+        self.is_w1_training = week_info == "W1"
+        
+        # Learn from existing W1_DayX workouts only if not W1 and client is provided
+        if self.garmin_client and not self.is_w1_training:
+            self._learn_from_existing_workouts()
+        elif self.is_w1_training:
+            logger.info("W1 training detected - skipping learning from existing workouts")
+        
         # Pre-process dataframe to list of lists for easier handling
         rows = df.values.tolist()
         
@@ -756,7 +761,7 @@ class WorkoutParser:
                 stepOrder=1, # Inside loop
                 description=step_desc,
                 exerciseName=api_exercise_name,  # Use mapped name for API
-                category=category,  # Use learned category
+                category=category if not self.is_w1_training else None,  # Skip category for W1
                 stepType=GarminStepType(stepTypeKey="interval", stepTypeId=3),
                 endCondition=GarminEndCondition(conditionTypeKey="lap.button", conditionTypeId=1),
                 endConditionValue=None,
@@ -914,7 +919,7 @@ class WorkoutParser:
                 stepOrder=1, # Inside loop
                 description=step_desc,
                 exerciseName=api_exercise_name,  # Use mapped name for API
-                category=category,  # Commented out to avoid API error
+                category=category if not self.is_w1_training else None,  # Skip category for W1
                 stepType=GarminStepType(stepTypeKey="interval", stepTypeId=3),
                 endCondition=GarminEndCondition(conditionTypeKey="lap.button", conditionTypeId=1),
                 endConditionValue=None,
@@ -953,7 +958,7 @@ class WorkoutParser:
         return GarminWorkoutDTO(workoutName=workout_name, workoutSegments=[segment]), curr_idx
 
     def parse_weight(self, value: str) -> float:
-        """Parses weight string like '25+2.3' or '自身'."""
+        """Parses weight string like '25+2.3', '18+2.3*2', or '自身'."""
         if not value or pd.isna(value) or value == "nan":
             return 0.0
         
@@ -962,13 +967,16 @@ class WorkoutParser:
         if "自身" in val_str:
             return 0.0
         
-        # Handle formulas
+        # Handle formulas - support basic arithmetic operations
         try:
-            # Dangerous eval? Restricted char set: 0-9 . + - / *
-            if re.match(r'^[0-9\.\+\-\s]+$', val_str):
-                return float(eval(val_str))
+            # Allow numbers, decimal points, and basic math operators
+            if re.match(r'^[0-9\.\+\-\*\/\(\)\s]+$', val_str):
+                result = float(eval(val_str))
+                logger.debug(f"Calculated weight: {val_str} = {result}")
+                return result
             return float(val_str)
-        except:
+        except Exception as e:
+            logger.warning(f"Failed to parse weight '{val_str}': {e}")
             return 0.0
 
     def parse_reps_string(self, value: str) -> List[float]:
