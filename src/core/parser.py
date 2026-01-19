@@ -186,8 +186,8 @@ class WorkoutParser:
         
         return None
     
-    def _read_google_sheet_with_api(self, spreadsheet_id: str, sheet_id: str = None, skip_oauth=False) -> pd.DataFrame:
-        """Read Google Sheet using API with authentication"""
+    def _read_google_sheet_with_api(self, spreadsheet_id: str, sheet_id: str = None, skip_oauth=False) -> tuple:
+        """Read Google Sheet using API with authentication. Returns (DataFrame, sheet_name)"""
         service = self._load_google_sheets_service(skip_oauth=skip_oauth)
         if not service:
             raise Exception("Google Sheets API service not available. Please set up credentials.")
@@ -195,6 +195,7 @@ class WorkoutParser:
         try:
             # Get sheet name from sheet_id if provided
             range_name = "A:ZZ"  # Read all columns
+            sheet_name = None
             if sheet_id:
                 # Get sheet metadata to find sheet name by gid
                 sheet_metadata = service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
@@ -215,12 +216,12 @@ class WorkoutParser:
             values = result.get('values', [])
             if not values:
                 logger.warning('No data found in Google Sheet.')
-                return pd.DataFrame()
+                return pd.DataFrame(), sheet_name
             
             # Convert to DataFrame
             df = pd.DataFrame(values)
-            logger.info(f"Successfully read Google Sheet with {len(df)} rows")
-            return df
+            logger.info(f"Successfully read Google Sheet with {len(df)} rows from sheet '{sheet_name}'")
+            return df, sheet_name
             
         except Exception as e:
             logger.error(f"Failed to read Google Sheet via API: {e}")
@@ -374,6 +375,7 @@ class WorkoutParser:
         logger.info(f"Loading from: {file_path}")
         
         # Load file
+        sheet_name = None
         try:
             if file_path.startswith("http") or file_path.endswith('.csv') or "format=csv" in file_path:
                 # Try Google Sheets API first for Google Sheets URLs
@@ -381,7 +383,7 @@ class WorkoutParser:
                     try:
                         spreadsheet_id, sheet_id = self._extract_spreadsheet_info(original_path)
                         logger.info(f"Attempting to read Google Sheet via API: {spreadsheet_id}")
-                        df = self._read_google_sheet_with_api(spreadsheet_id, sheet_id)
+                        df, sheet_name = self._read_google_sheet_with_api(spreadsheet_id, sheet_id)
                     except Exception as api_error:
                         logger.warning(f"Google Sheets API failed: {api_error}")
                         # Check if it's an OAuth error and try skipping OAuth
@@ -430,10 +432,11 @@ class WorkoutParser:
         
         workouts = []
         
-        # Extract week info from filename for workout naming
+        # Extract week info from sheet name or filename for workout naming
         import os
         filename = os.path.basename(original_path)
-        week_info = self._extract_week_info(filename)
+        # Prefer sheet name over filename for prefix
+        week_info = sheet_name if sheet_name else self._extract_week_info(filename)
         
         # Pre-process dataframe to list of lists for easier handling
         rows = df.values.tolist()
