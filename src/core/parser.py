@@ -29,10 +29,16 @@ import os.path
 logger = setup_logger(__name__)
 
 class WorkoutParser:
-    def __init__(self):
+    def __init__(self, garmin_client=None):
         self.exercise_mapping = self._load_exercise_mapping()
         self.category_mapping = self._load_category_mapping()
         self.category_mapping = self._load_category_mapping()
+        self.garmin_client = garmin_client
+        self.learned_mapping = {}  # Store learned exercise mappings from existing workouts
+        
+        # Learn from existing W1_DayX workouts if client is provided
+        if self.garmin_client:
+            self._learn_from_existing_workouts()
     
     def _create_rest_step(self, step_order: int, rest_seconds: int = 90) -> GarminExecutableStep:
         """Create a rest step with specified duration"""
@@ -91,6 +97,78 @@ class WorkoutParser:
             logger.warning(f"Category mapping file not found: {properties_file}")
             
         return mapping
+    
+    def _learn_from_existing_workouts(self):
+        """Learn exercise mappings from existing W1_DayX workouts"""
+        try:
+            # Get list of existing workouts
+            workouts = self.garmin_client.list_workouts(limit=200)
+            if not workouts:
+                logger.info("No existing workouts found to learn from")
+                return
+            
+            # Look for W1_Day patterns
+            w1_workouts = []
+            for workout in workouts:
+                workout_name = workout.get('workoutName', '')
+                if 'W1_Day' in workout_name:
+                    w1_workouts.append(workout)
+            
+            if not w1_workouts:
+                logger.info("No W1_DayX workouts found to learn from")
+                return
+            
+            logger.info(f"Found {len(w1_workouts)} W1_DayX workouts to learn from")
+            
+            # Get detailed info for each W1 workout
+            for workout in w1_workouts:
+                workout_id = workout.get('workoutId')
+                workout_name = workout.get('workoutName')
+                if workout_id:
+                    try:
+                        details = self.garmin_client.get_workout(workout_id)
+                        self._extract_exercise_mappings(details, workout_name)
+                    except Exception as e:
+                        logger.warning(f"Failed to get details for workout {workout_name}: {e}")
+            
+            logger.info(f"Learned {len(self.learned_mapping)} exercise mappings from existing workouts")
+            
+        except Exception as e:
+            logger.warning(f"Failed to learn from existing workouts: {e}")
+    
+    def _extract_exercise_mappings(self, workout_details: dict, workout_name: str):
+        """Extract exercise name and category mappings from workout details"""
+        try:
+            segments = workout_details.get('workoutSegments', [])
+            for segment in segments:
+                steps = segment.get('workoutSteps', [])
+                self._extract_from_steps(steps, workout_name)
+        except Exception as e:
+            logger.warning(f"Failed to extract mappings from {workout_name}: {e}")
+    
+    def _extract_from_steps(self, steps: list, workout_name: str):
+        """Recursively extract exercise mappings from workout steps"""
+        for step in steps:
+            if step.get('type') == 'RepeatGroupDTO':
+                # Handle repeat group
+                inner_steps = step.get('workoutSteps', [])
+                self._extract_from_steps(inner_steps, workout_name)
+            elif step.get('type') == 'ExecutableStepDTO':
+                # Extract exercise info
+                description = step.get('description', '')
+                exercise_name = step.get('exerciseName')
+                category = step.get('category')
+                
+                if description and exercise_name:
+                    # Extract Chinese name from description (before \n)
+                    chinese_name = description.split('\n')[0].strip()
+                    if chinese_name and chinese_name != '':
+                        self.learned_mapping[chinese_name] = {
+                            'exerciseName': exercise_name,
+                            'category': category,
+                            'source': workout_name
+                        }
+                        logger.debug(f"Learned: {chinese_name} -> {exercise_name} (from {workout_name})")
     
     def _load_google_sheets_service(self, skip_oauth=False):
         """Load Google Sheets service with authentication (supports both service account and OAuth2)"""
@@ -246,19 +324,34 @@ class WorkoutParser:
         
         return spreadsheet_id, sheet_id
     
-    def _find_best_exercise_match(self, exercise_name: str, threshold: float = 0.7) -> Optional[str]:
-        """Find the best matching exercise key from the mapping"""
-        if not exercise_name or not self.exercise_mapping:
+    def _find_best_exercise_match(self, exercise_name: str, threshold: float = 0.7) -> Optional[dict]:
+        """Find the best matching exercise mapping from learned data or static mapping"""
+        if not exercise_name:
             return None
             
-        # Check for exact matches first
+        # First check learned mappings from existing workouts (highest priority)
+        if exercise_name in self.learned_mapping:
+            learned_info = self.learned_mapping[exercise_name]
+            logger.debug(f"Using learned mapping: {exercise_name} -> {learned_info['exerciseName']} (category: {learned_info['category']}) from {learned_info['source']}")
+            return {
+                'exerciseName': learned_info['exerciseName'],
+                'category': learned_info['category']
+            }
+            
+        # Check for exact matches in static mapping (fallback to exerciseName only)
         if exercise_name in self.exercise_mapping:
-            return self.exercise_mapping[exercise_name]
+            return {
+                'exerciseName': self.exercise_mapping[exercise_name],
+                'category': None
+            }
             
         # Apply special mapping rules for common exercises
         special_match = self._apply_special_mapping_rules(exercise_name)
         if special_match:
-            return special_match
+            return {
+                'exerciseName': special_match,
+                'category': None
+            }
             
         # Clean the exercise name for better matching
         cleaned_name = self._clean_exercise_name(exercise_name)
@@ -605,30 +698,13 @@ class WorkoutParser:
             # Process current exercise first, then decide whether to continue
             should_stop_after_this = is_cardio
                 
-            # Try to map exercise name to standard key
-            exercise_key = self._find_best_exercise_match(exercise)
-            category = None
-            if exercise_key:
-                # Get category from category mapping
-                category = self.category_mapping.get(exercise_key)
-                if category:
-                    # Remove category prefix from key to get api_exercise_name
-                    if exercise_key.startswith(category + '_'):
-                        api_exercise_name = exercise_key[len(category) + 1:]
-                    else:
-                        api_exercise_name = exercise_key
-                else:
-                    # Fallback: use original split logic if not found in category mapping
-                    parts = exercise_key.split('_', 1)
-                    if len(parts) == 2:
-                        category = parts[0]
-                        api_exercise_name = parts[1]
-                    else:
-                        category = None
-                        api_exercise_name = exercise_key
-                
+            # Try to map exercise name to standard mapping
+            exercise_mapping = self._find_best_exercise_match(exercise)
+            if exercise_mapping:
+                # Use learned mapping directly
+                api_exercise_name = exercise_mapping['exerciseName']
+                category = exercise_mapping['category']
                 logger.info(f"Mapped exercise: '{exercise}' -> Category: '{category}', Name: '{api_exercise_name}'")
-                # Keep original name for description
                 display_exercise_name = exercise
             else:
                 # Use original name for both API and display
@@ -680,7 +756,7 @@ class WorkoutParser:
                 stepOrder=1, # Inside loop
                 description=step_desc,
                 exerciseName=api_exercise_name,  # Use mapped name for API
-                # category=category,  # Commented out to avoid API error
+                category=category,  # Use learned category
                 stepType=GarminStepType(stepTypeKey="interval", stepTypeId=3),
                 endCondition=GarminEndCondition(conditionTypeKey="lap.button", conditionTypeId=1),
                 endConditionValue=None,
@@ -778,30 +854,13 @@ class WorkoutParser:
             # Process current exercise first, then decide whether to continue
             should_stop_after_this = is_cardio
             
-            # Try to map exercise name to standard key
-            exercise_key = self._find_best_exercise_match(exercise)
-            category = None
-            if exercise_key:
-                # Get category from category mapping
-                category = self.category_mapping.get(exercise_key)
-                if category:
-                    # Remove category prefix from key to get api_exercise_name
-                    if exercise_key.startswith(category + '_'):
-                        api_exercise_name = exercise_key[len(category) + 1:]
-                    else:
-                        api_exercise_name = exercise_key
-                else:
-                    # Fallback: use original split logic if not found in category mapping
-                    parts = exercise_key.split('_', 1)
-                    if len(parts) == 2:
-                        category = parts[0]
-                        api_exercise_name = parts[1]
-                    else:
-                        category = None
-                        api_exercise_name = exercise_key
-                
+            # Try to map exercise name to standard mapping
+            exercise_mapping = self._find_best_exercise_match(exercise)
+            if exercise_mapping:
+                # Use learned mapping directly
+                api_exercise_name = exercise_mapping['exerciseName']
+                category = exercise_mapping['category']
                 logger.info(f"Mapped exercise: '{exercise}' -> Category: '{category}', Name: '{api_exercise_name}'")
-                # Keep original name for description
                 display_exercise_name = exercise
             else:
                 # Use original name for both API and display
@@ -855,7 +914,7 @@ class WorkoutParser:
                 stepOrder=1, # Inside loop
                 description=step_desc,
                 exerciseName=api_exercise_name,  # Use mapped name for API
-                # category=category,  # Commented out to avoid API error
+                category=category,  # Commented out to avoid API error
                 stepType=GarminStepType(stepTypeKey="interval", stepTypeId=3),
                 endCondition=GarminEndCondition(conditionTypeKey="lap.button", conditionTypeId=1),
                 endConditionValue=None,

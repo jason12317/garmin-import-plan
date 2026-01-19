@@ -24,8 +24,9 @@ def main():
         logger.error(f"Authentication failed: {e}")
         sys.exit(1)
 
-    # 2. Parse
-    parser_core = WorkoutParser()
+    # 2. Create Garmin client and parser with learned mappings
+    garmin_client = GarminClient()
+    parser_core = WorkoutParser(garmin_client=garmin_client)
     try:
         if args.day:
             logger.info(f"Parsing file '{args.file}' for target day: '{args.day}'...")
@@ -44,7 +45,8 @@ def main():
         sys.exit(1)
 
     # 3. Import
-    client = GarminClient()
+    # Reuse the same client instance
+    client = garmin_client
     
     # Check duplicates if not forced
     existing_workout_names = set()
