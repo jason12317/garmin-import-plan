@@ -45,6 +45,7 @@ class GarminExecutableStep(BaseStepDTO):
     endConditionValue: Optional[float] = None
     endConditionUnit: Optional[GarminEndConditionUnit] = None
     target: Optional[GarminStepTarget] = None
+    category: Optional[str] = None
     exerciseName: Optional[str] = None
     weightValue: Optional[float] = None
     weightUnit: Optional[GarminWeightUnit] = None

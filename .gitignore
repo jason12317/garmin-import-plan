@@ -8,6 +8,11 @@ build/
 *.egg-info/
 .env
 .DS_Store
+
+# Google Sheets API credentials
+google_sheets_credentials.json
+google_sheets_oauth_credentials.json
+google_sheets_token.json
 .pytest_cache/
 .coverage
 htmlcov/

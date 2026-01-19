@@ -1,7 +1,5 @@
 import argparse
 import sys
-import logging
-import os
 from src.core.auth import GarminAuth
 from src.core.parser import WorkoutParser
 from src.core.garmin_client import GarminClient

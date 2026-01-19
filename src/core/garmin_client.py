@@ -1,9 +1,9 @@
-import logging
+from src.utils.logger import setup_logger
 from typing import Any, Dict
 import garth
 from src.models.garmin_dto import GarminWorkoutDTO
 
-logger = logging.getLogger(__name__)
+logger = setup_logger(__name__)
 
 WORKOUT_SERVICE_ENDPOINT = "https://connect.garmin.com/gc-api/workout-service/workout"
 
