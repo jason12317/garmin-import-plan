@@ -10,6 +10,7 @@ from src.models.garmin_dto import (
     GarminWorkoutSegment, 
     GarminExecutableStep, 
     GarminEndCondition,
+    GarminEndConditionUnit,
     GarminStepType,
     GarminRepeatGroup,
     GarminWeightUnit
@@ -32,6 +33,22 @@ class WorkoutParser:
         self.exercise_mapping = self._load_exercise_mapping()
         self.category_mapping = self._load_category_mapping()
         self.category_mapping = self._load_category_mapping()
+    
+    def _create_rest_step(self, step_order: int, rest_seconds: int = 90) -> GarminExecutableStep:
+        """Create a rest step with specified duration"""
+        return GarminExecutableStep(
+            stepId=None,
+            stepOrder=step_order,
+            description="",
+            stepType=GarminStepType(stepTypeKey="rest", stepTypeId=5, displayOrder=5),
+            endCondition=GarminEndCondition(conditionTypeKey="time", conditionTypeId=2, displayOrder=2),
+            endConditionValue=rest_seconds,
+            endConditionUnit=GarminEndConditionUnit(unitKey="second", factor=1),
+            category=None,
+            exerciseName=None,
+            weightValue=None,
+            weightUnit=GarminWeightUnit(unitKey="kilogram") if False else None
+        )
         
     def _load_exercise_mapping(self) -> Dict[str, str]:
         """Load exercise name mapping from properties file"""
@@ -578,6 +595,13 @@ class WorkoutParser:
             if not exercise or exercise.lower() == "nan" or exercise.startswith("Day"):
                 break
                 
+            # Check if this is a cardio exercise (usually the last meaningful exercise)
+            cardio_keywords = ["間歇", "有氧", "跑步", "單車", "游泳", "划船機"]
+            is_cardio = any(keyword in exercise for keyword in cardio_keywords)
+            
+            # Process current exercise first, then decide whether to continue
+            should_stop_after_this = is_cardio
+                
             # Try to map exercise name to standard key
             exercise_key = self._find_best_exercise_match(exercise)
             category = None
@@ -662,20 +686,30 @@ class WorkoutParser:
             )
             
             if sets_val > 1:
-                # Create RepeatGroup
+                # Create RepeatGroup with rest step
+                rest_step = self._create_rest_step(step_order=2, rest_seconds=90)
                 repeat_group = GarminRepeatGroup(
                     stepOrder=len(steps) + 1,
                     numberOfIterations=sets_val,
-                    workoutSteps=[single_step],
+                    workoutSteps=[single_step, rest_step],
                     smartRepeat=False
                 )
                 steps.append(repeat_group)
             else:
-                # Single Step
+                # Single Step with rest
                 single_step.stepOrder = len(steps) + 1
                 steps.append(single_step)
                 
+                # Add rest step after each exercise
+                rest_step = self._create_rest_step(step_order=len(steps) + 1, rest_seconds=90)
+                steps.append(rest_step)
+                
             curr_idx += 1
+            
+            # Stop parsing if this was a cardio exercise
+            if should_stop_after_this:
+                logger.info(f"Stopping parsing after cardio exercise: '{exercise}'")
+                break
             
         # Construct DTO
         segment = GarminWorkoutSegment(segmentOrder=1, workoutSteps=steps)
@@ -732,7 +766,15 @@ class WorkoutParser:
             # Skip empty exercises or instructions like "↑填日期"
             if not exercise or exercise.lower() == "nan" or "填日期" in exercise:
                 curr_idx += 1
-                continue            
+                continue
+                
+            # Check if this is a cardio exercise (usually the last meaningful exercise)
+            cardio_keywords = ["間歇", "有氧", "跑步", "單車", "游泳", "划船機"]
+            is_cardio = any(keyword in exercise for keyword in cardio_keywords)
+            
+            # Process current exercise first, then decide whether to continue
+            should_stop_after_this = is_cardio
+            
             # Try to map exercise name to standard key
             exercise_key = self._find_best_exercise_match(exercise)
             category = None
@@ -819,20 +861,30 @@ class WorkoutParser:
             )
             
             if sets_val > 1:
-                # Create RepeatGroup
+                # Create RepeatGroup with rest step
+                rest_step = self._create_rest_step(step_order=2, rest_seconds=90)
                 repeat_group = GarminRepeatGroup(
                     stepOrder=len(steps) + 1,
                     numberOfIterations=sets_val,
-                    workoutSteps=[single_step],
+                    workoutSteps=[single_step, rest_step],
                     smartRepeat=False
                 )
                 steps.append(repeat_group)
             else:
-                # Single Step
+                # Single Step with rest
                 single_step.stepOrder = len(steps) + 1
                 steps.append(single_step)
                 
+                # Add rest step after each exercise
+                rest_step = self._create_rest_step(step_order=len(steps) + 1, rest_seconds=90)
+                steps.append(rest_step)
+                
             curr_idx += 1
+            
+            # Stop parsing if this was a cardio exercise
+            if should_stop_after_this:
+                logger.info(f"Stopping parsing after cardio exercise: '{exercise}'")
+                break
             
         # Construct DTO
         segment = GarminWorkoutSegment(segmentOrder=1, workoutSteps=steps)
