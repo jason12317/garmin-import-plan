@@ -75,3 +75,40 @@ class GarminClient:
             logger.error(f"Error creating workout: {e}")
             raise
 
+    def get_workout(self, workout_id: int, include_audio_notes: bool = True) -> Dict[str, Any]:
+        """
+        Get a single workout by ID from Garmin Connect.
+        
+        Args:
+            workout_id: The ID of the workout to retrieve
+            include_audio_notes: Whether to include audio notes in the response
+            
+        Returns:
+            Dict containing workout data
+        """
+        try:
+            # Build query parameters
+            params = []
+            if include_audio_notes:
+                params.append("includeAudioNotes=true")
+            
+            query_string = f"?{'&'.join(params)}" if params else ""
+            path = f"/workout-service/workout/{workout_id}{query_string}"
+            
+            logger.info(f"Fetching workout: ID {workout_id}")
+            
+            response = garth.client.connectapi(
+                path,
+                method="GET"
+            )
+            
+            if response:
+                logger.info(f"Successfully retrieved workout: ID {workout_id}")
+                return response
+            else:
+                raise Exception(f"Workout not found: ID {workout_id}")
+                
+        except Exception as e:
+            logger.error(f"Error fetching workout {workout_id}: {e}")
+            raise
+
