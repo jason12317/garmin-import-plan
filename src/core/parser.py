@@ -179,8 +179,18 @@ class WorkoutParser:
         token_file = "google_sheets_token.json"
         credentials_file = "google_sheets_oauth_credentials.json"
         
-        # The file google_sheets_token.json stores the user's access and refresh tokens
-        if os.path.exists(token_file):
+        # 1. Try Loading from Environment Variable (Secure way for Cloud)
+        env_token_json = os.getenv("GOOGLE_SHEETS_TOKEN_JSON")
+        if env_token_json:
+            try:
+                token_info = json.loads(env_token_json)
+                creds = Credentials.from_authorized_user_info(token_info, SCOPES)
+                logger.info("Loaded Google Sheets credentials from environment variable")
+            except Exception as e:
+                logger.warning(f"Failed to load credentials from environment variable: {e}")
+
+        # 2. The file google_sheets_token.json stores the user's access and refresh tokens
+        if not creds and os.path.exists(token_file):
             creds = Credentials.from_authorized_user_file(token_file, SCOPES)
         
         # If there are no (valid) credentials available, let the user log in
@@ -235,17 +245,33 @@ class WorkoutParser:
                         return None
                 else:
                     # Fallback to service account
+                    creds = None
                     service_account_file = "google_sheets_credentials.json"
-                    if os.path.exists(service_account_file):
+                    
+                    # 1. Try Environment Variable for Service Account
+                    env_sa_json = os.getenv("GOOGLE_SHEETS_CREDENTIALS_JSON")
+                    if env_sa_json:
+                        try:
+                            sa_info = json.loads(env_sa_json)
+                            creds = service_account.Credentials.from_service_account_info(
+                                sa_info, scopes=SCOPES
+                            )
+                            logger.info("Using Google Sheets API service account from Environment Variable")
+                        except Exception as e:
+                            logger.warning(f"Failed to load service account from environment: {e}")
+
+                    # 2. Try Local File
+                    if not creds and os.path.exists(service_account_file):
                         try:
                             creds = service_account.Credentials.from_service_account_file(
                                 service_account_file, scopes=SCOPES
                             )
-                            logger.info("Using Google Sheets API service account")
+                            logger.info("Using Google Sheets API service account from local file")
                         except Exception as e:
-                            logger.error(f"Failed to load service account: {e}")
+                            logger.error(f"Failed to load service account from file: {e}")
                             return None
-                    else:
+                    
+                    if not creds:
                         logger.warning("No Google Sheets credentials found")
                         return None
         

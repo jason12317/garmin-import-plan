@@ -24,8 +24,47 @@
 python -m src.cli.main ./my_plan.xlsx --email user@example.com
 
 # 匯入 Google Sheet
-python -m src.cli.main "https://docs.google.com/spreadsheets/d/..." --email user@example.com
+
+python3 -m src.cli.main "https://docs.google.com/spreadsheets/d/1eTW7OSs0pNerj8XujtU9RgLzGZ0JP1CTEs24i6bBwms/edit?gid=1615008567#gid=1615008567" --email jason12317@gmail.com --day Day3
+
 ```
+
+## Web App (Streamlit)
+
+本專案提供圖形化網頁介面，方便手機或非技術人員使用。
+
+### 本地執行
+
+```bash
+# 啟動 Streamlit
+streamlit run app.py
+```
+
+### 雲端部署 (Streamlit Cloud)
+
+若要部署至免費的 [Streamlit Cloud](https://streamlit.io/cloud)，請遵循以下資安設定，**切勿上傳 token json 檔案至 GitHub**。
+
+#### 1. 準備環境變數
+
+在 Streamlit Cloud 的 "Advanced Settings" -> "Secrets" 區域，貼上您的憑證內容。支援以下變數：
+
+**A. Google Sheets User Token** (推薦，個人權限)
+變數名稱: `GOOGLE_SHEETS_TOKEN_JSON`
+內容: 複製本地 `google_sheets_token.json` 的全部內容。
+
+**B. Google Service Account** (備用)
+變數名稱: `GOOGLE_SHEETS_CREDENTIALS_JSON`
+內容: 複製本地 `google_sheets_credentials.json` 的全部內容。
+
+**C. Garmin 帳密預設值** (可選，方便登入)
+```toml
+GARMIN_EMAIL = "your_email@example.com"
+GARMIN_PASSWORD = "your_password"
+```
+
+#### 2. 注意事項
+- 專案已設定 `.gitignore` 忽略所有 `*.json` 與 `.streamlit/secrets.toml`，確保憑證不進版控。
+- 程式會優先讀取環境變數，若無環境變數才會嘗試讀取本地檔案。
 
 ## 開發
 
