@@ -8,3 +8,4 @@ pytest-mock>=3.10.0
 ruff>=0.1.0
 black>=23.0.0
 streamlit
+altair<5
