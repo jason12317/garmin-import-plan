@@ -8,3 +8,6 @@ pytest-mock>=3.10.0
 ruff>=0.1.0
 black>=23.0.0
 streamlit>=1.39.0
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib
